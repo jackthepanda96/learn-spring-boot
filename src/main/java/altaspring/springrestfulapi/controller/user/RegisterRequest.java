@@ -1,4 +1,4 @@
-package altaspring.springrestfulapi.model;
+package altaspring.springrestfulapi.controller.user;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

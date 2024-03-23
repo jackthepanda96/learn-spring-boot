@@ -1,4 +1,4 @@
-package altaspring.springrestfulapi.entity;
+package altaspring.springrestfulapi.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
