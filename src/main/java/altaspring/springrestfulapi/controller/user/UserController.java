@@ -4,6 +4,7 @@ import altaspring.springrestfulapi.entity.ResponseObject;
 import altaspring.springrestfulapi.model.User;
 import altaspring.springrestfulapi.model.RegisterQuery;
 import altaspring.springrestfulapi.entity.Response;
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Set;
-
 @RestController
 public class UserController {
 
@@ -31,18 +31,18 @@ public class UserController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public Response<String> register(@RequestBody RegisterRequest request){
+    public Response register(@RequestBody RegisterRequest request){
         User user = new User();
         user.setName(request.getName());
         user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
+        user.setPassword(BCrypt.withDefaults().hashToString(12, request.getPassword().toCharArray()));
 
         Set<ConstraintViolation<Object>> constraintViolations = validator.validate(request);
         if (!constraintViolations.isEmpty()) {
             throw new ConstraintViolationException(constraintViolations);
         }
         registerQuery.save(user);
-        return Response.<String>builder().code(HttpStatus.CREATED.value()).data("OK").build();
+        return Response.<String>builder().code(HttpStatus.CREATED.value()).code(HttpStatus.CREATED.value()).message("success register data").build();
     }
 
     @PostMapping(
@@ -60,6 +60,13 @@ public class UserController {
             throw new ConstraintViolationException(constraintViolations);
         }
         User result = registerQuery.findById(loginRequest.getUsername()).orElseThrow(()-> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username atau password salah"));
+
+        BCrypt.Result hashCheck = BCrypt.verifyer().verify(loginRequest.getPassword().toCharArray(), result.getPassword().toCharArray());
+
+        if (!hashCheck.verified){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Username atau password salah");
+        }
+
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setUsername(result.getUsername());
         loginResponse.setName(result.getName());
